@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.InputMismatchException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
@@ -6,7 +7,6 @@ import java.util.Scanner;
 /**
  * Shedule the conferance as per the topics and ts duration
  */
-
 class Talk {
     String topic;
     int duration;
@@ -17,6 +17,9 @@ class Talk {
     }
 }
 
+/**
+ * Represents a session of talks in track.
+ */
 class Session {
     List<Talk> talks = new ArrayList<>();
     int startTime;
@@ -26,6 +29,9 @@ class Session {
     }
 }
 
+/**
+ * Manages the scheduling of sessions in tracks.
+ */
 class TrackTheTime {
     List<Session> sessions = new ArrayList<>();
     int remainingTime;
@@ -45,38 +51,57 @@ class TrackTheTime {
     }
 }
 
+/**
+ * Main class to execute the conference scheduling.
+ */
 public class ProgrammingConferenceScheduler {
+    private static final int MORNING_SESSION_DURATION = 180;
+    private static final int AFTERNOON_SESSION_DURATION = 240;
+    private static final int MAX_TALKS_PER_SESSION = 4;
+    private static final int TOTAL_MINUTES = 480;
+
     public static void main(String[] args) {
         List<Talk> talks = getTalksFromUser();
         scheduleConference(talks);
     }
-    
+
     private static List<Talk> getTalksFromUser() {
         List<Talk> talks = new ArrayList<>();
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Enter the number of talks:");
-        int numberOfTalks = scanner.nextInt();
-        for (int i = 0; i < numberOfTalks; i++) {
-            System.out.println("Enter the topic of talk " + (i + 1) + ":");
-            String topic = scanner.nextLine();
-            scanner.nextLine();
-            System.out.println("Enter the duration of talk " + (i + 1) + " in minutes:");
-            int duration = scanner.nextInt();
-            talks.add(new Talk(topic, duration));
+
+        try {
+            System.out.println("Enter the number of talks:");
+            int numberOfTalks = scanner.nextInt();
+            for (int i = 0; i < numberOfTalks; i++) {
+                System.out.println("Enter the topic of talk " + (i + 1) + ":");
+                String topic = scanner.nextLine();
+                scanner.nextLine();
+                System.out.println("Enter the duration of talk " + (i + 1) + " in minutes:");
+                int duration = scanner.nextInt();
+                talks.add(new Talk(topic, duration));
+            }
+        } catch (InputMismatchException e) {
+            System.out.println("Please enter valid input.");
+        } catch (Exception e) {
+            System.out.println("Error:" + e.getMessage());
+        } finally {
+            scanner.close();
         }
+
         return talks;
     }
 
     public static void scheduleConference(List<Talk> talks) {
         int startTime = 9 * 60;
         int totalTracks = (int) Math.ceil((double) talks.size() / 12);
-    
-        for (int i = 0; i < totalTracks; i++) {
-            TrackTheTime track = new TrackTheTime(480);
 
-            while (!talks.isEmpty() && track.sessions.size() < 4) {
-                Session morningSession = createSession(startTime, talks, 180);
-                Session afternoonSession = createSession(startTime + 240, talks, 240);
+        for (int i = 0; i < totalTracks; i++) {
+            TrackTheTime track = new TrackTheTime(TOTAL_MINUTES);
+
+            while (!talks.isEmpty() && track.sessions.size() < MAX_TALKS_PER_SESSION) {
+                Session morningSession = createSession(startTime, talks, MORNING_SESSION_DURATION);
+                Session afternoonSession = createSession(startTime + AFTERNOON_SESSION_DURATION, talks,
+                        AFTERNOON_SESSION_DURATION);
 
                 if (!morningSession.talks.isEmpty()) {
                     track.addSession(morningSession);
@@ -118,7 +143,7 @@ public class ProgrammingConferenceScheduler {
                 int minutes = currentTime % 60;
 
                 System.out.printf("%02d:%02d %s %s %dmin%n", hours, minutes, (hours >= 12) ? "PM" : "AM",
-                                  talk.topic, talk.duration);
+                        talk.topic, talk.duration);
 
                 currentTime += talk.duration;
             }
